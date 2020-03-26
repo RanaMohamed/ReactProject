@@ -94,10 +94,7 @@ const Navbar = props => {
             </div>
             <div className='dropdown__body'></div>
           </div>
-          <Cart
-            cartItems={props.cartItems}
-            onItemRemove={props.onItemRemove}
-          ></Cart>
+          <Cart></Cart>
         </div>
       </div>
       <div className='header__lower container'>

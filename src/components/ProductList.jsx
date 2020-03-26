@@ -3,6 +3,7 @@ import Product from './Product';
 import Filters from './Filters';
 import Paging from './Paging';
 import { Link } from 'react-router-dom';
+import { connect } from 'react-redux';
 
 class ProductList extends Component {
   state = {
@@ -30,7 +31,7 @@ class ProductList extends Component {
   };
 
   render() {
-    const { products, categories } = this.props;
+    const { products } = this.props;
     const { activePage, perPage, sort, category, search } = this.state;
 
     let filteredProducts = [...products];
@@ -70,7 +71,6 @@ class ProductList extends Component {
     return (
       <React.Fragment>
         <Filters
-          categories={categories}
           activeFilter={category}
           onChangeCategory={this.categoryChangeHandler}
           search={this.state.search}
@@ -95,11 +95,7 @@ class ProductList extends Component {
           </div>
           <div className='item-listing__items item-listing--3items'>
             {shownProducts.map(prod => (
-              <Product
-                key={prod.id}
-                product={prod}
-                onAddToCart={this.props.onAddToCart}
-              ></Product>
+              <Product key={prod.id} product={prod}></Product>
             ))}
           </div>
           {sortedProducts.length > perPage && (
@@ -115,4 +111,10 @@ class ProductList extends Component {
   }
 }
 
-export default ProductList;
+const mapStateToProps = state => {
+  return {
+    products: state.products.items,
+    categories: state.categories.items
+  };
+};
+export default connect(mapStateToProps)(ProductList);

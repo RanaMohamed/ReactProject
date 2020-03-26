@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import axios from '../axios';
 import Product from './Product';
+import { connect } from 'react-redux';
+import { addCartItem } from '../actions/cartActions';
 
 class ProductDetails extends Component {
   state = {
@@ -24,7 +26,9 @@ class ProductDetails extends Component {
   getProduct = async () => {
     let product = { ...this.state.product };
     const id = this.props.match.params.id;
-    product = await axios.get(`http://localhost:3000/products/${id}`);
+    product = await axios.get(
+      `http://localhost:3000/products/${id}?_expand=category`
+    );
     const relatedProducts = await axios.get(
       `http://localhost:3000/products?categoryId=${product.categoryId}&_limit=4`
     );
@@ -35,7 +39,7 @@ class ProductDetails extends Component {
     this.setState({ quantity });
   }
   render() {
-    const { data, price, discount, categoryId } = this.state.product;
+    const { data, price, discount, category } = this.state.product;
     return (
       <React.Fragment>
         <div className='container product-details'>
@@ -111,10 +115,10 @@ class ProductDetails extends Component {
                 <button
                   className='btn btn--primary'
                   onClick={() =>
-                    this.props.onAddToCart(
-                      this.state.product,
-                      this.state.quantity
-                    )
+                    this.props.addCartItem({
+                      product: this.state.product,
+                      quantity: this.state.quantity
+                    })
                   }
                 >
                   Add to cart
@@ -123,10 +127,7 @@ class ProductDetails extends Component {
               <div className='product-details__meta'>
                 Category:{' '}
                 <a rel='tag' href='/'>
-                  {
-                    this.props.categories.find(cat => cat.id === categoryId)
-                      ?.title
-                  }
+                  {category?.title}
                 </a>
                 .
               </div>
@@ -171,11 +172,7 @@ class ProductDetails extends Component {
             </h3>
             <div className='item-listing__items item-listing--4items'>
               {this.state.relatedProducts.map(prod => (
-                <Product
-                  key={prod.id}
-                  product={prod}
-                  onAddToCart={this.props.onAddToCart}
-                ></Product>
+                <Product key={prod.id} product={prod}></Product>
               ))}
             </div>
           </section>
@@ -185,4 +182,4 @@ class ProductDetails extends Component {
   }
 }
 
-export default ProductDetails;
+export default connect(null, { addCartItem })(ProductDetails);

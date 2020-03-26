@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { removeCartItem } from '../actions/cartActions';
 
 class Cart extends Component {
   state = {
@@ -11,14 +13,16 @@ class Cart extends Component {
     const classes = this.state.opened
       ? 'dropdown dropdown--left dropdown--opened'
       : 'dropdown dropdown--left';
-    const { cartItems } = this.props;
-    let total = 0;
 
+    const { cartItems } = this.props;
+
+    let total = 0;
     cartItems.map(
       item =>
         (total +=
           (item.product.price - (item.product.discount | 0)) * item.count)
     );
+
     return (
       <div className={classes}>
         <div className='dropdown__header' onClick={this.toggleCart}>
@@ -62,7 +66,7 @@ class Cart extends Component {
                       className='item-small-1__action'
                       onClick={e => {
                         e.preventDefault();
-                        this.props.onItemRemove(item);
+                        this.props.removeCartItem(item);
                       }}
                     >
                       <i className='fas fa-times'></i>
@@ -91,4 +95,9 @@ class Cart extends Component {
   }
 }
 
-export default Cart;
+const mapStateToProps = state => {
+  return {
+    cartItems: state.cart.items
+  };
+};
+export default connect(mapStateToProps, { removeCartItem })(Cart);

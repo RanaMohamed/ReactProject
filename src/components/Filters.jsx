@@ -1,4 +1,5 @@
 import React from 'react';
+import { connect } from 'react-redux';
 
 const Filters = props => {
   const { categories, activeFilter } = props;
@@ -63,5 +64,9 @@ const Filters = props => {
     </section>
   );
 };
-
-export default Filters;
+const mapStateToProps = state => {
+  return {
+    categories: state.categories.items
+  };
+};
+export default connect(mapStateToProps)(Filters);

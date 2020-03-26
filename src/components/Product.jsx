@@ -1,5 +1,9 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
+import { connect } from 'react-redux';
+
+import { addCartItem } from '../actions/cartActions';
+import { removeProduct } from '../actions/productsActions';
 
 class Product extends Component {
   render() {
@@ -18,7 +22,11 @@ class Product extends Component {
             className='item-medium-1__action'
             onClick={e => {
               e.preventDefault();
-              this.props.onAddToCart(this.props.product);
+
+              this.props.addCartItem({
+                product: this.props.product,
+                quantity: 1
+              });
             }}
           >
             Add to Cart
@@ -38,7 +46,13 @@ class Product extends Component {
           <Link to={`/product/${id}`}>
             <i className='fas fa-edit'></i>
           </Link>
-          <a href='/'>
+          <a
+            href='/'
+            onClick={e => {
+              e.preventDefault();
+              this.props.removeProduct(this.props.product);
+            }}
+          >
             <i className='fas fa-trash-alt'></i>
           </a>
         </div>
@@ -47,4 +61,4 @@ class Product extends Component {
   }
 }
 
-export default Product;
+export default connect(null, { addCartItem, removeProduct })(Product);

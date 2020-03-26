@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 import Joi from 'joi-browser';
 import axios from '../axios';
+import { connect } from 'react-redux';
+import { addProduct, editProduct } from '../actions/productsActions';
 
-export default class ProductForm extends Component {
+class ProductForm extends Component {
   state = {
     product: {
       data: [],
@@ -24,6 +26,7 @@ export default class ProductForm extends Component {
   };
 
   schema = {
+    id: Joi,
     data: Joi.array().items(this.dataSchema),
     price: Joi.number().label('Price'),
     discount: Joi.number().label('Discount'),
@@ -49,7 +52,6 @@ export default class ProductForm extends Component {
     if (id !== 'add') {
       product = await axios.get(`http://localhost:3000/products/${id}`);
     }
-    delete product.id;
     product.data = [...product.data];
     while (product.data.length < this.props.languages.length) {
       product.data.push({ title: '', description: '' });
@@ -98,14 +100,9 @@ export default class ProductForm extends Component {
       let product = { ...this.state.product };
       const id = this.props.match.params.id;
       if (id === 'add') {
-        product = await axios.post('http://localhost:3000/products', product);
-        this.props.onAddProduct(product);
+        await this.props.addProduct(product);
       } else {
-        product = await axios.put(
-          `http://localhost:3000/products/${id}`,
-          product
-        );
-        this.props.onEditProduct(product);
+        await this.props.editProduct(product);
       }
       this.props.history.push('/products');
     }
@@ -466,3 +463,14 @@ export default class ProductForm extends Component {
     );
   }
 }
+
+const mapStateToProps = state => {
+  return {
+    categories: state.categories.items,
+    languages: state.languages.items,
+    paymentTypes: state.paymentTypes.items
+  };
+};
+export default connect(mapStateToProps, { addProduct, editProduct })(
+  ProductForm
+);
