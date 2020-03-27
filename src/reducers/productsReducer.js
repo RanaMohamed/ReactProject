@@ -21,7 +21,6 @@ const productsReducer = (state = initialState, action) => {
         items: state.items.filter(p => p.id !== action.payload.id)
       };
     case TYPES.EDIT_PRODUCT:
-      console.log(action.payload);
       const products = [...state.items];
       const index = products.findIndex(p => p.id === action.payload.id);
       products[index] = action.payload;

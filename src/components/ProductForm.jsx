@@ -1,33 +1,31 @@
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import Joi from 'joi-browser';
 import axios from '../axios';
 import { connect } from 'react-redux';
 import { addProduct, editProduct } from '../actions/productsActions';
 
-class ProductForm extends Component {
-  state = {
-    product: {
-      data: [],
-      imageUrls: ['/img/products/product-grey-1.jpg'],
-      price: '',
-      discount: '',
-      categoryId: '',
-      types: []
-      // tags: ['tag1', 'tag2']
-    },
-    errors: {},
-    activeTab: 0,
-    onSale: true
-  };
+const ProductForm = props => {
+  const [onSale, setOnSale] = useState(true);
+  const [activeTab, setActiveTab] = useState(0);
+  const [errors, setErrors] = useState({});
+  const [product, setProduct] = useState({
+    data: [],
+    imageUrls: ['/img/products/product-grey-1.jpg'],
+    price: '',
+    discount: '',
+    categoryId: '',
+    types: []
+    // tags: ['tag1', 'tag2']
+  });
 
-  dataSchema = {
+  const dataSchema = {
     title: Joi.string().label('Name'),
     description: Joi.string().label('Description')
   };
 
-  schema = {
+  const schema = {
     id: Joi,
-    data: Joi.array().items(this.dataSchema),
+    data: Joi.array().items(dataSchema),
     price: Joi.number().label('Price'),
     discount: Joi.number().label('Discount'),
     categoryId: Joi.required().label('Category'),
@@ -36,340 +34,305 @@ class ProductForm extends Component {
     // tags: ['tag1', 'tag2']
   };
 
-  componentDidMount() {
-    this.initProduct();
-  }
+  useEffect(() => {
+    initProduct();
+  }, [props.languages, props.match.params.id]);
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.languages.length !== this.props.languages.length) {
-      this.initProduct();
-    }
-  }
-
-  initProduct = async () => {
-    let product = { ...this.state.product };
-    const id = this.props.match.params.id;
+  const initProduct = async () => {
+    let p = { ...product };
+    const id = props.match.params.id;
     if (id !== 'add') {
-      product = await axios.get(`http://localhost:3000/products/${id}`);
+      p = await axios.get(`http://localhost:3000/products/${id}`);
     }
-    product.data = [...product.data];
-    while (product.data.length < this.props.languages.length) {
-      product.data.push({ title: '', description: '' });
+    p.data = [...p.data];
+    while (p.data.length < props.languages.length) {
+      p.data.push({ title: '', description: '' });
     }
-    this.setState({ product });
+    setProduct(p);
   };
 
-  handleChange = ({ target }) => {
-    const product = { ...this.state.product };
-    product[target.name] = parseInt(target.value)
+  const handleChange = ({ target }) => {
+    const p = { ...product };
+    p[target.name] = parseInt(target.value)
       ? parseInt(target.value)
       : target.value;
-    this.setState({ product });
+    setProduct(p);
   };
-  handleChangeArray = ({ target }) => {
-    const product = { ...this.state.product };
+  const handleChangeArray = ({ target }) => {
+    const p = { ...product };
     const ind = target.name.split('.');
-    product[ind[0]][ind[1]][ind[2]] = target.value;
-    this.setState({ product });
+    p[ind[0]][ind[1]][ind[2]] = target.value;
+    setProduct(p);
   };
-  handleCheckbox = ({ target }) => {
-    const product = { ...this.state.product };
+  const handleCheckbox = ({ target }) => {
+    const p = { ...product };
     const value = parseInt(target.value)
       ? parseInt(target.value)
       : target.value;
-    product[target.name] = [...product[target.name]];
-    const index = product[target.name].findIndex(item => item === value);
+    p[target.name] = [...p[target.name]];
+    const index = p[target.name].findIndex(item => item === value);
     if (index === -1) {
-      product[target.name].push(value);
+      p[target.name].push(value);
     } else {
-      product[target.name].splice(index, 1);
+      p[target.name].splice(index, 1);
     }
-    this.setState({ product });
+    setProduct(p);
   };
-  handleSubmit = async e => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    const errs = Joi.validate(this.state.product, this.schema, {
+    const errs = Joi.validate(product, schema, {
       abortEarly: false
     }).error;
     const errors = {};
     if (errs) {
       errs.details.map(e => (errors[e.path] = e.message));
     }
-    this.setState({ errors });
+    setErrors(errors);
     if (errs === null) {
-      let product = { ...this.state.product };
-      const id = this.props.match.params.id;
+      let p = { ...product };
+      const id = props.match.params.id;
       if (id === 'add') {
-        await this.props.addProduct(product);
+        await props.addProduct(p);
       } else {
-        await this.props.editProduct(product);
+        await props.editProduct(p);
       }
-      this.props.history.push('/products');
+      props.history.push('/products');
     }
   };
-  changeSale = onSale => {
-    this.setState({ onSale });
-  };
-  render() {
-    return (
-      <form className='add-product' action='' onSubmit={this.handleSubmit}>
-        <div className='add-product__images slider'>
-          <div className='add-product__image-actions'>
-            <div className='add-product__image-action'>
-              <a href='/'>
-                <i className='fas fa-plus-square'></i>
-              </a>
-              <a href='/'>
-                <i className='fas fa-edit'></i>
-              </a>
-              <a href='/'>
-                <i className='fas fa-trash-alt'></i>
-              </a>
-            </div>
-          </div>
-          <div className='slider__items'>
-            <div
-              className='slider__item active'
-              style={{
-                backgroundImage: 'url(/img/products/product-grey-7.jpg)'
-              }}
-            ></div>
-            <div
-              className='slider__item'
-              style={{
-                backgroundImage: 'url(/img/products/product-grey-7.jpg)'
-              }}
-            ></div>
-            <div
-              className='slider__item'
-              style={{
-                backgroundImage: 'url(/img/products/product-grey-7.jpg)'
-              }}
-            ></div>
-          </div>
-          <div className='slider__indicators'>
-            <span className='slider__indicator active'></span>
-            <span className='slider__indicator'></span>
-            <span className='slider__indicator'></span>
+
+  return (
+    <form className='add-product' action='' onSubmit={handleSubmit}>
+      <div className='add-product__images slider'>
+        <div className='add-product__image-actions'>
+          <div className='add-product__image-action'>
+            <a href='/'>
+              <i className='fas fa-plus-square'></i>
+            </a>
+            <a href='/'>
+              <i className='fas fa-edit'></i>
+            </a>
+            <a href='/'>
+              <i className='fas fa-trash-alt'></i>
+            </a>
           </div>
         </div>
-        <div className='add-product__data'>
-          <div className='form-controls'>
-            {this.state.product.data.length === this.props.languages.length && (
-              <section className='tabs'>
-                <div className='tabs__headers'>
-                  {this.props.languages.map(lang => (
-                    <div
-                      key={lang.id}
-                      className={
-                        this.state.activeTab === lang.id
-                          ? 'tabs__header active'
-                          : 'tabs__header'
-                      }
-                      onClick={() => this.setState({ activeTab: lang.id })}
-                    >
-                      {lang.title}
-                    </div>
-                  ))}
-                </div>
-                <div className='tabs__bodies'>
-                  {this.props.languages.map(lang => (
-                    <div
-                      key={lang.id}
-                      className={
-                        this.state.activeTab === lang.id
-                          ? 'tabs__body active'
-                          : 'tabs__body'
-                      }
-                    >
-                      <div
-                        className={
-                          'form-group ' +
-                          (this.state.errors[`data,${lang.id},title`] &&
-                            'invalid')
-                        }
-                      >
-                        <label htmlFor={'title' + lang.id}>Name</label>
-                        <input
-                          className='form-control'
-                          type='text'
-                          name={`data.${lang.id}.title`}
-                          id={'title' + lang.id}
-                          value={this.state.product.data[lang.id].title}
-                          onChange={this.handleChangeArray}
-                        />
-                        <small style={{ color: '#ed5348' }}>
-                          {this.state.errors[`data,${lang.id},title`]}
-                        </small>
-                      </div>
-                      <div
-                        className={
-                          'form-group ' +
-                          (this.state.errors[`data,${lang.id},description`] &&
-                            'invalid')
-                        }
-                      >
-                        <label htmlFor={'description' + lang.id}>
-                          Description
-                        </label>
-                        <textarea
-                          className='form-control'
-                          cols='30'
-                          rows='4'
-                          name={`data.${lang.id}.description`}
-                          id={'title' + lang.id}
-                          value={this.state.product.data[lang.id].description}
-                          onChange={this.handleChangeArray}
-                        ></textarea>
-                        <small style={{ color: '#ed5348' }}>
-                          {this.state.errors[`data,${lang.id},description`]}
-                        </small>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-            <div
-              className={'form-group ' + (this.state.errors.price && 'invalid')}
-            >
-              <label htmlFor='price'>Price</label>
-              <input
-                className='form-control'
-                type='text'
-                name='price'
-                id='price'
-                value={this.state.product.price}
-                onChange={this.handleChange}
-              />
-              <small style={{ color: '#ed5348' }}>
-                {this.state.errors.price}
-              </small>
-            </div>
-            <div className='add-product__discount'>
-              <div
-                className={
-                  'form-group ' + (this.state.errors.status && 'invalid')
-                }
-              >
-                <label htmlFor='status'>Satus</label>
-                <div className='form-group__radios'>
-                  <div className='form-group__radio'>
-                    <input
-                      type='radio'
-                      name='status'
-                      id='onSale'
-                      checked={this.state.onSale}
-                      onChange={() => this.changeSale(true)}
-                    />
-                    <label
-                      htmlFor='onSale'
-                      style={{
-                        marginBottom: 0,
-                        fontWeight: 'initial',
-                        padding: '0.4rem'
-                      }}
-                    >
-                      On Sale
-                    </label>
+        <div className='slider__items'>
+          <div
+            className='slider__item active'
+            style={{
+              backgroundImage: 'url(/img/products/product-grey-7.jpg)'
+            }}
+          ></div>
+          <div
+            className='slider__item'
+            style={{
+              backgroundImage: 'url(/img/products/product-grey-7.jpg)'
+            }}
+          ></div>
+          <div
+            className='slider__item'
+            style={{
+              backgroundImage: 'url(/img/products/product-grey-7.jpg)'
+            }}
+          ></div>
+        </div>
+        <div className='slider__indicators'>
+          <span className='slider__indicator active'></span>
+          <span className='slider__indicator'></span>
+          <span className='slider__indicator'></span>
+        </div>
+      </div>
+      <div className='add-product__data'>
+        <div className='form-controls'>
+          {product.data.length === props.languages.length && (
+            <section className='tabs'>
+              <div className='tabs__headers'>
+                {props.languages.map(lang => (
+                  <div
+                    key={lang.id}
+                    className={
+                      activeTab === lang.id
+                        ? 'tabs__header active'
+                        : 'tabs__header'
+                    }
+                    onClick={() => setActiveTab(lang.id)}
+                  >
+                    {lang.title}
                   </div>
-                  <div className='form-group__radio'>
-                    <input
-                      type='radio'
-                      name='status'
-                      id='notOnSale'
-                      checked={!this.state.onSale}
-                      onChange={() => this.changeSale(false)}
-                    />
-                    <label
-                      htmlFor='notOnSale'
-                      style={{
-                        marginBottom: 0,
-                        fontWeight: 'initial',
-                        padding: '0.4rem'
-                      }}
-                    >
-                      Not On Sale
-                    </label>
-                  </div>
-                </div>
+                ))}
               </div>
-              {this.state.onSale && (
-                <div
-                  className={
-                    'form-group ' + (this.state.errors.discount && 'invalid')
-                  }
-                >
-                  <label htmlFor='discount'>Discount</label>
+              <div className='tabs__bodies'>
+                {props.languages.map(lang => (
+                  <div
+                    key={lang.id}
+                    className={
+                      activeTab === lang.id ? 'tabs__body active' : 'tabs__body'
+                    }
+                  >
+                    <div
+                      className={
+                        'form-group ' +
+                        (errors[`data,${lang.id},title`] && 'invalid')
+                      }
+                    >
+                      <label htmlFor={'title' + lang.id}>Name</label>
+                      <input
+                        className='form-control'
+                        type='text'
+                        name={`data.${lang.id}.title`}
+                        id={'title' + lang.id}
+                        value={product.data[lang.id].title}
+                        onChange={handleChangeArray}
+                      />
+                      <small style={{ color: '#ed5348' }}>
+                        {errors[`data,${lang.id},title`]}
+                      </small>
+                    </div>
+                    <div
+                      className={
+                        'form-group ' +
+                        (errors[`data,${lang.id},description`] && 'invalid')
+                      }
+                    >
+                      <label htmlFor={'description' + lang.id}>
+                        Description
+                      </label>
+                      <textarea
+                        className='form-control'
+                        cols='30'
+                        rows='4'
+                        name={`data.${lang.id}.description`}
+                        id={'title' + lang.id}
+                        value={product.data[lang.id].description}
+                        onChange={handleChangeArray}
+                      ></textarea>
+                      <small style={{ color: '#ed5348' }}>
+                        {errors[`data,${lang.id},description`]}
+                      </small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          <div className={'form-group ' + (errors.price && 'invalid')}>
+            <label htmlFor='price'>Price</label>
+            <input
+              className='form-control'
+              type='text'
+              name='price'
+              id='price'
+              value={product.price}
+              onChange={handleChange}
+            />
+            <small style={{ color: '#ed5348' }}>{errors.price}</small>
+          </div>
+          <div className='add-product__discount'>
+            <div className={'form-group ' + (errors.status && 'invalid')}>
+              <label htmlFor='status'>Satus</label>
+              <div className='form-group__radios'>
+                <div className='form-group__radio'>
                   <input
-                    className='form-control'
-                    type='text'
-                    name='discount'
-                    id='discount'
-                    value={this.state.product.discount}
-                    onChange={this.handleChange}
+                    type='radio'
+                    name='status'
+                    id='onSale'
+                    checked={onSale}
+                    onChange={() => setOnSale(true)}
                   />
-                  <small style={{ color: '#ed5348' }}>
-                    {this.state.errors.discount}
-                  </small>
+                  <label
+                    htmlFor='onSale'
+                    style={{
+                      marginBottom: 0,
+                      fontWeight: 'initial',
+                      padding: '0.4rem'
+                    }}
+                  >
+                    On Sale
+                  </label>
                 </div>
-              )}
-            </div>
-            <div
-              className={'form-group ' + (this.state.errors.types && 'invalid')}
-            >
-              <label htmlFor='type'>Payment Types</label>
-              <div className='form-group__checkboxs'>
-                {this.props.paymentTypes.map(type => (
-                  <div className='form-group__checkbox' key={type.id}>
-                    <input
-                      type='checkbox'
-                      name='types'
-                      id={'types' + type.id}
-                      value={type.id}
-                      checked={
-                        this.state.product.types.find(t => t === type.id)
-                          ? true
-                          : false
-                      }
-                      onChange={this.handleCheckbox}
-                    />
-                    <label
-                      style={{
-                        marginBottom: 0,
-                        fontWeight: 'initial',
-                        padding: '0.4rem'
-                      }}
-                      htmlFor={'types' + type.id}
-                    >
-                      {type.title}
-                    </label>
-                  </div>
-                ))}
+                <div className='form-group__radio'>
+                  <input
+                    type='radio'
+                    name='status'
+                    id='notOnSale'
+                    checked={!onSale}
+                    onChange={() => setOnSale(false)}
+                  />
+                  <label
+                    htmlFor='notOnSale'
+                    style={{
+                      marginBottom: 0,
+                      fontWeight: 'initial',
+                      padding: '0.4rem'
+                    }}
+                  >
+                    Not On Sale
+                  </label>
+                </div>
               </div>
             </div>
-            <div
-              className={
-                'form-group ' + (this.state.errors.categoryId && 'invalid')
-              }
-            >
-              <label htmlFor='categoryId'>Category</label>
-              <select
-                className='form-control'
-                name='categoryId'
-                id='categoryId'
-                value={this.state.product.categoryId}
-                onChange={this.handleChange}
-              >
-                {this.props.categories.map(cat => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.title}
-                  </option>
-                ))}
-              </select>
+            {onSale && (
+              <div className={'form-group ' + (errors.discount && 'invalid')}>
+                <label htmlFor='discount'>Discount</label>
+                <input
+                  className='form-control'
+                  type='text'
+                  name='discount'
+                  id='discount'
+                  value={product.discount}
+                  onChange={handleChange}
+                />
+                <small style={{ color: '#ed5348' }}>{errors.discount}</small>
+              </div>
+            )}
+          </div>
+          <div className={'form-group ' + (errors.types && 'invalid')}>
+            <label htmlFor='type'>Payment Types</label>
+            <div className='form-group__checkboxs'>
+              {props.paymentTypes.map(type => (
+                <div className='form-group__checkbox' key={type.id}>
+                  <input
+                    type='checkbox'
+                    name='types'
+                    id={'types' + type.id}
+                    value={type.id}
+                    checked={
+                      product.types.find(t => t === type.id) ? true : false
+                    }
+                    onChange={handleCheckbox}
+                  />
+                  <label
+                    style={{
+                      marginBottom: 0,
+                      fontWeight: 'initial',
+                      padding: '0.4rem'
+                    }}
+                    htmlFor={'types' + type.id}
+                  >
+                    {type.title}
+                  </label>
+                </div>
+              ))}
             </div>
+          </div>
+          <div className={'form-group ' + (errors.categoryId && 'invalid')}>
+            <label htmlFor='categoryId'>Category</label>
+            <select
+              className='form-control'
+              name='categoryId'
+              id='categoryId'
+              value={product.categoryId}
+              onChange={handleChange}
+            >
+              {props.categories.map(cat => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.title}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            {/* <div className='taged-textbox form-group'>
+          {/* <div className='taged-textbox form-group'>
               <label className='taged-textbox__lable' htmlFor=''>
                 Tags
               </label>
@@ -449,20 +412,19 @@ class ProductForm extends Component {
                 id=''
               />
             </div>*/}
-            <div className='add-product__actions'>
-              <button href='#' className='btn btn--gray'>
-                Cancel
-              </button>
-              <button href='#' className='btn btn--primary'>
-                Add
-              </button>
-            </div>
+          <div className='add-product__actions'>
+            <button href='#' className='btn btn--gray'>
+              Cancel
+            </button>
+            <button href='#' className='btn btn--primary'>
+              Add
+            </button>
           </div>
         </div>
-      </form>
-    );
-  }
-}
+      </div>
+    </form>
+  );
+};
 
 const mapStateToProps = state => {
   return {
